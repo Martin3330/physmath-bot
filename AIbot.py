@@ -1,15 +1,14 @@
-import ta
+import telebot
 import pandas as pd
 from binance.um_futures import UMFutures
-import asyncio
-import nest_asyncio
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 import time
+from telebot import types
+import threading
 
 # 1. ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ
 client = UMFutures()
 TOKEN = '8166948827:AAEYEtAe_rh5VM8VeKhz-v7FR0ruS8zPBuo'
-bot = Bot(token=TOKEN)
+bot = telebot.TeleBot(TOKEN)
 
 COIN_LIST = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'TRXUSDT', 'LTCUSDT', 'LINKUSDT']
 
@@ -81,115 +80,63 @@ def get_live_data(symbol):
         return resp
     except: return None
 
-async def main():
-    nest_asyncio.apply()
-    print("Բոտը ակտիվ է...")
-    last_update_id = -1
+@bot.message_handler(commands=['start'])
+def start(message):
+    cid = message.chat.id
+    users[cid] = {"lang": "am", "coins": [], "trading": True, "alert_min": 0, "last_alert": 0, "waiting_min": False}
+    kb = types.InlineKeyboardMarkup()
+    kb.add(types.InlineKeyboardButton("🇦🇲 Հայերեն", callback_data='am'),
+           types.InlineKeyboardButton("🇷🇺 Русский", callback_data='ru'),
+           types.InlineKeyboardButton("🇺🇸 English", callback_data='en'))
+    bot.send_message(cid, strings["am"]["select_lang"], reply_markup=kb)
 
+@bot.callback_query_handler(func=lambda call: call.data in ['am', 'ru', 'en'])
+def set_lang(call):
+    cid = call.message.chat.id
+    users[cid]["lang"] = call.data
+    kb = types.InlineKeyboardMarkup()
+    for c in COIN_LIST:
+        kb.add(types.InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"first_{c}"))
+    bot.edit_message_text(strings[call.data]["select_coin"], cid, call.message.message_id, reply_markup=kb)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('first_'))
+def set_first_coin(call):
+    cid = call.message.chat.id
+    coin = call.data.replace("first_", "")
+    users[cid]["coins"] = [coin]
+    lang = users[cid]["lang"]
+    bot.send_message(cid, f"{strings[lang]['welcome']}{coin}{strings[lang]['help_hint']}", parse_mode='Markdown')
+
+# Անալիզի ֆունկցիա (Աշխատում է հետին պլանում)
+def run_analysis():
     while True:
         try:
-            updates = await bot.get_updates(offset=last_update_id + 1, timeout=5)
-            
-            if updates:
-                for update in updates:
-                    last_update_id = update.update_id
-                    chat_id = update.effective_chat.id
-                    text = update.message.text if update.message else (update.callback_query.data if update.callback_query else None)
-                    if not text: continue
-                    is_callback = update.callback_query is not None
-
-                    if chat_id not in users:
-                        users[chat_id] = {"lang": "am", "coins": [], "trading": True, "alert_min": 0, "last_alert": 0, "waiting_min": False}
-                    
-                    u = users[chat_id]
-                    lang = u["lang"]
-
-                    if text == "/start":
-                        kb = [[InlineKeyboardButton("🇦🇲 Հայերեն", callback_data='am')], [InlineKeyboardButton("🇷🇺 Русский", callback_data='ru')], [InlineKeyboardButton("🇺🇸 English", callback_data='en')]]
-                        await bot.send_message(chat_id=chat_id, text=strings["am"]["select_lang"], reply_markup=InlineKeyboardMarkup(kb))
-                    elif text == "/help":
-                        await bot.send_message(chat_id=chat_id, text=strings[lang]["help_msg"], parse_mode='Markdown')
-                    elif text in ["am", "ru", "en"] and is_callback:
-                        u["lang"] = text
-                        kb = [[InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"first_{c}")] for c in COIN_LIST]
-                        await bot.send_message(chat_id=chat_id, text=strings[text]["select_coin"], reply_markup=InlineKeyboardMarkup(kb))
-                    elif text == "/trading":
-                        u["trading"] = True
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['trade_group']}{strings[lang]['trading_on']}", parse_mode='Markdown')
-                    elif text == "/stoptrading":
-                        u["trading"] = False
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['trade_group']}{strings[lang]['trading_off']}", parse_mode='Markdown')
-                    elif text in ["/about", "/changeabout"]:
-                        kb = [[InlineKeyboardButton("1 ժամ", callback_data="time_60")], [InlineKeyboardButton("1 Օր", callback_data="time_1440")], [InlineKeyboardButton("📝 Ձեր տարբերակը", callback_data="time_custom")]]
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['about_group']}{strings[lang]['about_ask']}", reply_markup=InlineKeyboardMarkup(kb), parse_mode='Markdown')
-                    elif text == "/stopabout":
-                        u["alert_min"] = 0
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['about_group']}{strings[lang]['stop_about']}", parse_mode='Markdown')
-                    elif text == "/changecoin":
-                        kb = [[InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"first_{c}")] for c in COIN_LIST]
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['coin_group']}{strings[lang]['select_coin']}", reply_markup=InlineKeyboardMarkup(kb), parse_mode='Markdown')
-                    elif text == "/multicoin":
-                        kb = [[InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"add_{c}")] for c in COIN_LIST]
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['coin_group']}{strings[lang]['select_coin']}", reply_markup=InlineKeyboardMarkup(kb), parse_mode='Markdown')
-                    elif is_callback and text.startswith("first_"):
-                        coin = text.replace("first_", "")
-                        u["coins"] = [coin]
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['welcome']}{coin}{strings[lang]['help_hint']}", parse_mode='Markdown')
-                    elif is_callback and text.startswith("add_"):
-                        coin = text.replace("add_", "")
-                        if coin not in u["coins"]: u["coins"].append(coin)
-                        await bot.send_message(chat_id=chat_id, text=f"{strings[lang]['coin_group']}{strings[lang]['added_multi']}{coin}", parse_mode='Markdown')
-                    elif is_callback and text.startswith("time_"):
-                        val = text.replace("time_", "")
-                        if val == "custom":
-                            u["waiting_min"] = True
-                            await bot.send_message(chat_id=chat_id, text=strings[lang]["custom_time"])
-                        else:
-                            u["alert_min"] = int(val)
-                            u["last_alert"] = time.time()
-                            await bot.send_message(chat_id=chat_id, text=strings[lang]["about_set"])
-                    elif u["waiting_min"] and text.isdigit():
-                        u["alert_min"] = int(text)
-                        u["last_alert"] = time.time()
-                        u["waiting_min"] = False
-                        await bot.send_message(chat_id=chat_id, text=strings[lang]["about_set"])
-
             now = time.time()
-            for cid, ud in users.items():
-                if ud["alert_min"] > 0 and (now - ud["last_alert"]) >= (ud["alert_min"] * 60):
-                    for sym in ud["coins"]:
-                        df = get_live_data(sym)
-                        if df is not None:
-                            p = df['Close'].iloc[-1]
-                            await bot.send_message(chat_id=cid, text=strings[ud["lang"]]["price_msg"].format(sym.replace("USDT",""), p))
-                    ud["last_alert"] = now
-
-                if ud["trading"] and ud["coins"]:
+            for cid, ud in list(users.items()):
+                if ud["trading"] and ud.get("coins"):
                     for sym in ud["coins"]:
                         df = get_live_data(sym)
                         if df is not None and len(df) > 5:
                             curr_p = df['Close'].iloc[-1]
-                            for i in range(len(df) - 4, len(df) - 15, -1):
-                                m1_h, m1_l = df['High'].iloc[i], df['Low'].iloc[i]
-                                m3_h, m3_l = df['High'].iloc[i+2], df['Low'].iloc[i+2]
-                                m2_c = df['Close'].iloc[i+1]
-                                z_id = f"{cid}_{sym}_{df['Time'].iloc[i+1]}"
-                                
-                                if m3_l > m1_h and m2_c > m1_h:
-                                    if curr_p <= m3_l and curr_p >= m1_h:
-                                        if last_triggered_zones.get(z_id + "_b") != True:
-                                            await bot.send_message(chat_id=cid, text=f"🚀 **Buy Signal**: {sym}\nPrice: {curr_p}$", parse_mode='Markdown')
-                                            last_triggered_zones[z_id + "_b"] = True
-                                    break
-                                if m3_h < m1_l and m2_c < m1_l:
-                                    if curr_p >= m3_h and curr_p <= m1_l:
-                                        if last_triggered_zones.get(z_id + "_s") != True:
-                                            await bot.send_message(chat_id=cid, text=f"⚠️ **Sell Signal**: {sym}\nPrice: {curr_p}$", parse_mode='Markdown')
-                                            last_triggered_zones[z_id + "_s"] = True
-                                    break
-            await asyncio.sleep(1)
-        except Exception as e:
-            await asyncio.sleep(5)
+                            m1_h, m1_l = df['High'].iloc[-3], df['Low'].iloc[-3]
+                            m2_c = df['Close'].iloc[-2]
+                            m3_h, m3_l = df['High'].iloc[-1], df['Low'].iloc[-1]
+                            z_id = f"{cid}_{sym}_{df['Time'].iloc[-2]}"
 
-if __name__ == "__main__":
-    asyncio.run(main())
+                            if m3_l > m1_h and m2_c > m1_h:
+                                if last_triggered_zones.get(z_id + "_b") != True:
+                                    bot.send_message(cid, f"🚀 **Buy Signal**: {sym}\nPrice: {curr_p}$", parse_mode='Markdown')
+                                    last_triggered_zones[z_id + "_b"] = True
+                            elif m3_h < m1_l and m2_c < m1_l:
+                                if last_triggered_zones.get(z_id + "_s") != True:
+                                    bot.send_message(cid, f"⚠️ **Sell Signal**: {sym}\nPrice: {curr_p}$", parse_mode='Markdown')
+                                    last_triggered_zones[z_id + "_s"] = True
+            time.sleep(15)
+        except Exception as e:
+            print(f"Analysis error: {e}")
+            time.sleep(10)
+
+threading.Thread(target=run_analysis, daemon=True).start()
+
+print("Բոտը միացված է Render-ում...")
+bot.infinity_polling()
