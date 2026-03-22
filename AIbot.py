@@ -68,4 +68,12 @@ def handle_ai(message):
         bot.edit_message_text("Error! Please try again.", message.chat.id, sent.message_id)
 
 if __name__ == "__main__":
+    print("Բոտը միացավ...")
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=0, timeout=20)
+        except Exception as e:
+            print(f"Սխալ կապի մեջ: {e}")
+            import time
+            time.sleep(5) # Սպասում է 5 վայրկյան ու նորից փորձում
     bot.infinity_polling()
