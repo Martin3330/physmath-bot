@@ -7,8 +7,8 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 import time
 
 # 1. ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ
-client = UMFutures(proxies={'https': 'http://proxy.server:3128'})
-TOKEN = '8669488027:AAEYEtae_rN5VM8VmKhz-v7fROruS0zPBuo'
+client = UMFutures()
+TOKEN = '8166948827:AAEYEtAe_rh5VM8VeKhz-v7FR0ruS8zPBuo'
 bot = Bot(token=TOKEN)
 
 COIN_LIST = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'TRXUSDT', 'LTCUSDT', 'LINKUSDT']
@@ -19,7 +19,7 @@ strings = {
         "select_coin": "💰 Ընտրեք մետաղադրամը ցանկից.",
         "welcome": "✅ Ընտրված է: Անալիզը սկսված է: \n🪙 ",
         "help_hint": "\n\n👋 **Օգտագործեք /help բոլոր հրամանների համար:**",
-        "help_msg": "📜 **Հրամանների ցանկ**\n\n/start - Լեզվի ընտրություն\n/help - Հրամանների ցանկ\n\n**🛑 Գործարքների կարգավորումներ**\n/trading - Ազդանշաններ (Buy/Sell)\n/stoptrading - Անջատել ազդանշանները\n\n**🔔 Տեղեկության կարգավորումներ**\n/about - Գնի հիշեցում\n/changeabout - Փոխել տեղեկությունը\n/stopabout - Անջատել գնի հիշեցումը\n\n**🪙 Մետաղադրամի կարգավորումներ**\n/changecoin - Փոխել կրիպտոն\n/multicoin - Ավելացնել նորը",
+        "help_msg": "📜 **Հրամանների ցանկ**\n\n/start - Լեզվի ընտրություն\n/help - Հրամանների ցանկ\n\n**🛑 Գործարքների կարգավորումներ**\n/trading - Ազդանշաններ (Buy/Sell)\n/stoptrading - Անջատել ազդանշանները\n\n**🔔 Տեղեկության կարգավորումներ**\n/about - Գնի հիշեցում\n/changeabout - Փոխել տեղեկությունը\n/stopabout - Անջատել ազդանշանները\n\n**🪙 Մետաղադրամի կարգավորումներ**\n/changecoin - Փոխել կրիպտոն\n/multicoin - Ավելացնել նորը",
         "about_ask": "⏰ Որքա՞ն հաճախ ցույց տամ գինը?",
         "custom_time": "⌨️ Գրեք րոպեների քանակը (օրինակ՝ 15):",
         "about_set": "✅ Կարգավորումը պահպանվեց:",
@@ -89,22 +89,18 @@ async def main():
     while True:
         try:
             updates = await bot.get_updates(offset=last_update_id + 1, timeout=5)
-
+            
             if updates:
                 for update in updates:
                     last_update_id = update.update_id
                     chat_id = update.effective_chat.id
-                    if update.message:
-                        text = update.message.text
-                        is_callback = False
-                    elif update.callback_query:
-                        text = update.callback_query.data
-                        is_callback = True
-                    else:
-                        continue
+                    text = update.message.text if update.message else (update.callback_query.data if update.callback_query else None)
+                    if not text: continue
+                    is_callback = update.callback_query is not None
+
                     if chat_id not in users:
                         users[chat_id] = {"lang": "am", "coins": [], "trading": True, "alert_min": 0, "last_alert": 0, "waiting_min": False}
-
+                    
                     u = users[chat_id]
                     lang = u["lang"]
 
@@ -158,7 +154,6 @@ async def main():
                         u["waiting_min"] = False
                         await bot.send_message(chat_id=chat_id, text=strings[lang]["about_set"])
 
-            # Անալիզի հատվածը կատարվում է հրամաններից հետո
             now = time.time()
             for cid, ud in users.items():
                 if ud["alert_min"] > 0 and (now - ud["last_alert"]) >= (ud["alert_min"] * 60):
@@ -179,7 +174,7 @@ async def main():
                                 m3_h, m3_l = df['High'].iloc[i+2], df['Low'].iloc[i+2]
                                 m2_c = df['Close'].iloc[i+1]
                                 z_id = f"{cid}_{sym}_{df['Time'].iloc[i+1]}"
-
+                                
                                 if m3_l > m1_h and m2_c > m1_h:
                                     if curr_p <= m3_l and curr_p >= m1_h:
                                         if last_triggered_zones.get(z_id + "_b") != True:
