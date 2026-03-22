@@ -7,7 +7,7 @@ import time
 TOKEN = "8622979310:AAFBqIQCE9Yp4uy_aZ-yX1EceUBAejshbeA"
 # ԱՅՍՏԵՂ ԴԻՐ ՔՈ ԲՈԼՈՐՈՎԻՆ ՆՈՐ API KEY-Ը
 genai.configure(api_key="AIzaSyCrhORyWAIv5ngXXM8CHCyIpEtl4P9O5UU") 
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 bot = telebot.TeleBot(TOKEN)
 user_lang = {}
