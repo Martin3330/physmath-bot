@@ -7,46 +7,40 @@ import threading
 
 # --- ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ ---
 client = UMFutures()
-TOKEN = '8669488027:AAEYEtae_rN5VM8VmKhz-v7fROruS0zPBuo'
+TOKEN = '8166948827:AAEYEtAe_rh5VM8VeKhz-v7FR0ruS8zPBuo'
 bot = telebot.TeleBot(TOKEN)
 
 COIN_LIST = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'TRXUSDT', 'LTCUSDT', 'LINKUSDT']
 
-# --- ՏԵՔՍՏԵՐ (ԼՐԻՎ ՈՒՂՂՎԱԾ) ---
+# --- ՏԵՔՍՏԵՐ (ՔՈ ՍՔՐԻՆՇՈԹՆԵՐԻՑ) ---
 strings = {
     "am": {
         "select_lang": "🌐 Ընտրեք լեզուն:",
         "select_coin": "💰 Ընտրեք մետաղադրամը ցանկից.",
-        "welcome": "✅ Ընտրված է: Անալիզը սկսված է: \n🪙 ",
-        "help_msg": "📜 **Հրամանների ցանկ**\n\n/start - Լեզվի ընտրություն\n/help - Ցանկ\n\n**🛑 Տրեյդինգ**\n/trading - Միացնել սիգնալները\n/stoptrading - Անջատել\n\n**🔔 Գնի հիշեցում**\n/about - Կարգավորել րոպեները\n/stopabout - Անջատել\n\n**🪙 Մետաղադրամ**\n/changecoin - Փոխել\n/multicoin - Ավելացնել նորը",
+        "welcome": "✅ Ընտրված է: Անալիզը սկսված է:\n🌚 {coin}\n\n👋 Օգտագործեք /help բոլոր հրամանների համար:",
+        "help_msg": "📜 Հրամանների ցանկ\n\n/start - Լեզվի ընտրություն\n/help - Հրամանների ցանկ\n\n🛑 Գործարքների կարգավորումներ\n/trading - Ազդանշաններ (Buy/Sell)\n/stoptrading - Անջատել ազդանշանները\n\n🔔 Տեղեկության կարգավորումներ\n/about - Գնի հիշեցում\n/changeabout - Փոխել տեղեկությունը\n/stopabout - Անջատել գնի հիշեցումը\n\n🌚 Մետաղադրամի կարգավորումներ\n/changecoin - Փոխել կրիպտոն\n/multicoin - Ավելացնել նորը",
         "about_ask": "⏰ Քանի՞ րոպեն մեկ ցույց տամ գինը: (Գրեք միայն թիվը)",
-        "about_set": "✅ Պահպանվեց: Հիշեցումը միացված է:",
-        "trading_on": "🚀 Տրեյդինգ անալիզը ՄԻԱՑՎԱԾ Է:",
-        "trading_off": "🛑 Տրեյդինգ անալիզը ԱՆՋԱՏՎԱԾ Է:"
+        "about_set": "✅ Պահպանվեց:"
     },
     "ru": {
         "select_lang": "🌐 Выберите язык:",
-        "select_coin": "💰 Выберите монету из списка:",
-        "welcome": "✅ Выбрано: Анализ запущен: \n🪙 ",
-        "help_msg": "📜 **Список команд**\n\n/start - Выбор языка\n/help - Список команд\n\n**🛑 Трейдинг**\n/trading - Включить сигналы\n/stoptrading - Выключить\n\n**🔔 Напоминание цены**\n/about - Настроить интервал (мин)\n/stopabout - Выключить\n\n**🪙 Монета**\n/changecoin - Изменить монету\n/multicoin - Добавить новую",
-        "about_ask": "⏰ Через сколько минут присылать цену? (Введите только число)",
-        "about_set": "✅ Сохранено: Напоминание включено:",
-        "trading_on": "🚀 Торговый анализ ВКЛЮЧЕН:",
-        "trading_off": "🛑 Торговый анализ ВЫКЛЮЧЕН:"
+        "select_coin": "💰 Выберите монету из списка.",
+        "welcome": "✅ Выбрано: Анализ запущен:\n🌚 {coin}\n\n👋 Используйте /help для всех команд:",
+        "help_msg": "📜 Список команд\n\n/start - Выбор языка\n/help - Список команд\n\n🛑 Настройки сделок\n/trading - Сигналы (Buy/Sell)\n/stoptrading - Выключить сигналы\n\n🔔 Настройки информации\n/about - Напоминание цены\n/changeabout - Изменить интервал\n/stopabout - Выключить напоминание\n\n🌚 Настройки монеты\n/changecoin - Изменить монету\n/multicoin - Добавить новую",
+        "about_ask": "⏰ Через сколько минут присылать цену?",
+        "about_set": "✅ Сохранено:"
     },
     "en": {
         "select_lang": "🌐 Select language:",
-        "select_coin": "💰 Select a coin from the list:",
-        "welcome": "✅ Selected: Analysis started: \n🪙 ",
-        "help_msg": "📜 **Commands List**\n\n/start - Language selection\n/help - Help menu\n\n**🛑 Trading**\n/trading - Enable signals\n/stoptrading - Disable\n\n**🔔 Price Alert**\n/about - Set interval (min)\n/stopabout - Disable\n\n**🪙 Coin**\n/changecoin - Change coin\n/multicoin - Add new coin",
-        "about_ask": "⏰ Every how many minutes should I show the price? (Enter numbers only)",
-        "about_set": "✅ Saved: Reminder is active:",
-        "trading_on": "🚀 Trading analysis is ON:",
-        "trading_off": "🛑 Trading analysis is OFF:"
+        "select_coin": "💰 Select a coin from the list.",
+        "welcome": "✅ Selected: Analysis started:\n🌚 {coin}\n\n👋 Use /help for all commands:",
+        "help_msg": "📜 Commands List\n\n/start - Language selection\n/help - Commands list\n\n🛑 Trade Settings\n/trading - Signals (Buy/Sell)\n/stoptrading - Disable signals\n\n🔔 Info Settings\n/about - Price Alert\n/changeabout - Change interval\n/stopabout - Disable price alert\n\n🌚 Coin Settings\n/changecoin - Change coin\n/multicoin - Add new",
+        "about_ask": "⏰ Every how many minutes show price?",
+        "about_set": "✅ Saved:"
     }
 }
 
-users = {} 
+users = {}
 last_triggered_zones = {}
 
 # --- BINANCE DATA ---
@@ -58,7 +52,7 @@ def get_live_data(symbol):
         return resp
     except: return None
 
-# --- COMMANDS ---
+# --- ՀՐԱՄԱՆՆԵՐ ---
 @bot.message_handler(commands=['start'])
 def start(message):
     cid = message.chat.id
@@ -73,23 +67,9 @@ def start(message):
 def help_cmd(message):
     cid = message.chat.id
     lang = users.get(cid, {"lang":"am"})["lang"]
-    bot.send_message(cid, strings[lang]["help_msg"], parse_mode='Markdown')
+    bot.send_message(cid, strings[lang]["help_msg"])
 
-@bot.message_handler(commands=['trading'])
-def trade_on(message):
-    cid = message.chat.id
-    if cid in users:
-        users[cid]["trading"] = True
-        bot.send_message(cid, strings[users[cid]["lang"]]["trading_on"])
-
-@bot.message_handler(commands=['stoptrading'])
-def trade_off(message):
-    cid = message.chat.id
-    if cid in users:
-        users[cid]["trading"] = False
-        bot.send_message(cid, strings[users[cid]["lang"]]["trading_off"])
-
-@bot.message_handler(commands=['about'])
+@bot.message_handler(commands=['about', 'changeabout'])
 def about_cmd(message):
     cid = message.chat.id
     if cid in users:
@@ -103,7 +83,7 @@ def stop_about(message):
         users[cid]["alert_min"] = 0
         bot.send_message(cid, "🔕 Alert OFF")
 
-# --- TEXT HANDLER ---
+# --- ՏԵՔՍՏԻ ՄՇԱԿՈՒՄ (About-ի համար) ---
 @bot.message_handler(func=lambda m: True)
 def handle_text(message):
     cid = message.chat.id
@@ -115,7 +95,7 @@ def handle_text(message):
             lang = users[cid]["lang"]
             bot.send_message(cid, f"{strings[lang]['about_set']} {minutes} min.")
         except:
-            bot.send_message(cid, "❌ Numbers only / Только числа / Only numbers:")
+            bot.send_message(cid, "🔢 Numbers only:")
 
 # --- CALLBACKS ---
 @bot.callback_query_handler(func=lambda call: True)
@@ -126,7 +106,6 @@ def cb_handler(call):
         users[cid]["lang"] = lang
         kb = types.InlineKeyboardMarkup()
         for c in COIN_LIST:
-            # Սարքում ենք կոճակները BTC, ETH տեսքով
             kb.add(types.InlineKeyboardButton(c.replace("USDT",""), callback_data=f"coin_{c}"))
         bot.edit_message_text(strings[lang]["select_coin"], cid, call.message.message_id, reply_markup=kb)
     
@@ -135,9 +114,9 @@ def cb_handler(call):
         if cid not in users: users[cid] = {"lang": "am", "coins": [], "trading": True, "alert_min": 0, "last_alert": 0}
         users[cid]["coins"] = [coin]
         lang = users[cid]["lang"]
-        bot.send_message(cid, f"{strings[lang]['welcome']}{coin}")
+        bot.send_message(cid, strings[lang]["welcome"].format(coin=coin))
 
-# --- ANALYSIS LOOP ---
+# --- ԱՆԱԼԻԶ ---
 def analysis_loop():
     while True:
         try:
@@ -149,24 +128,22 @@ def analysis_loop():
                     if df is None: continue
                     curr_p = df['Close'].iloc[-1]
 
-                    # 1. About Alert
                     if data["alert_min"] > 0:
                         if now - data["last_alert"] >= data["alert_min"] * 60:
                             bot.send_message(cid, f"🔔 {symbol} Price: {curr_p}$")
                             users[cid]["last_alert"] = now
                     
-                    # 2. Trading Signals (FVG)
                     if data["trading"]:
                         m1_h, m1_l = df['High'].iloc[-3], df['Low'].iloc[-3]
                         m2_c = df['Close'].iloc[-2]
                         m3_h, m3_l = df['High'].iloc[-1], df['Low'].iloc[-1]
                         zone_id = f"{cid}_{symbol}_{df['Time'].iloc[-2]}"
 
-                        if m3_l > m1_h and m2_c > m1_h: # Buy
+                        if m3_l > m1_h and m2_c > m1_h:
                             if last_triggered_zones.get(zone_id + "b") != True:
                                 bot.send_message(cid, f"🚀 **BUY SIGNAL**: {symbol}\nPrice: {curr_p}$", parse_mode='Markdown')
                                 last_triggered_zones[zone_id + "b"] = True
-                        elif m3_h < m1_l and m2_c < m1_l: # Sell
+                        elif m3_h < m1_l and m2_c < m1_l:
                             if last_triggered_zones.get(zone_id + "s") != True:
                                 bot.send_message(cid, f"⚠️ **SELL SIGNAL**: {symbol}\nPrice: {curr_p}$", parse_mode='Markdown')
                                 last_triggered_zones[zone_id + "s"] = True
