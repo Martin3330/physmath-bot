@@ -1,2 +1,5 @@
-pyTelegramBotAPI
-google-generativeai
+python-telegram-bot==20.3
+binance-futures-connector
+pandas
+ta
+nest_asyncio
