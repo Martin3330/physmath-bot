@@ -4,7 +4,7 @@ import google.generativeai as genai
 
 # Տվյալներ
 TOKEN = "8622979310:AAFBqIQCE9Yp4uy_aZ-yX1EceUBAejshbeA"
-genai.configure(api_key="AIzaSyB7tU2piqmRdwsGeqmbiiOfkvlN-JMfu4Q")
+genai.configure(api_key="AIzaSyA0hISQgvVHvzfhXi-iIczxmugi9w6c3kU")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 bot = telebot.TeleBot(TOKEN)
