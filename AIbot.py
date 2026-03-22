@@ -7,7 +7,7 @@ import threading
 
 # 1. ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ
 client = UMFutures()
-TOKEN = '8166948827:AAEYEtAe_rh5VM8VeKhz-v7FR0ruS8zPBuo'
+TOKEN = '8669488027:AAEYEtae_rN5VM8VmKhz-v7fROruS0zPBuo'
 bot = telebot.TeleBot(TOKEN)
 
 COIN_LIST = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'TRXUSDT', 'LTCUSDT', 'LINKUSDT']
