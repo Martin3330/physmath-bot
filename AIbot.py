@@ -7,11 +7,12 @@ import threading
 
 # 1. ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ
 client = UMFutures()
-TOKEN = '8669488027:AAEYEtae_rN5VM8VmKhz-v7fROruS0zPBuo'
+TOKEN = '8166948827:AAEYEtAe_rh5VM8VeKhz-v7FR0ruS8zPBuo'
 bot = telebot.TeleBot(TOKEN)
 
 COIN_LIST = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'TRXUSDT', 'LTCUSDT', 'LINKUSDT']
 
+# Քո տեքստերը (Strings) - Չեն փոխվել
 strings = {
     "am": {
         "select_lang": "🌐 Ընտրեք լեզուն / Выберите язык / Select language:",
@@ -80,6 +81,8 @@ def get_live_data(symbol):
         return resp
     except: return None
 
+# --- ՀՐԱՄԱՆՆԵՐԻ ՄՇԱԿՈՒՄ ---
+
 @bot.message_handler(commands=['start'])
 def start(message):
     cid = message.chat.id
@@ -90,30 +93,74 @@ def start(message):
            types.InlineKeyboardButton("🇺🇸 English", callback_data='en'))
     bot.send_message(cid, strings["am"]["select_lang"], reply_markup=kb)
 
-@bot.callback_query_handler(func=lambda call: call.data in ['am', 'ru', 'en'])
-def set_lang(call):
-    cid = call.message.chat.id
-    users[cid]["lang"] = call.data
-    kb = types.InlineKeyboardMarkup()
-    for c in COIN_LIST:
-        kb.add(types.InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"first_{c}"))
-    bot.edit_message_text(strings[call.data]["select_coin"], cid, call.message.message_id, reply_markup=kb)
+@bot.message_handler(commands=['help'])
+def help_cmd(message):
+    cid = message.chat.id
+    lang = users.get(cid, {"lang": "am"})["lang"]
+    bot.send_message(cid, strings[lang]["help_msg"], parse_mode='Markdown')
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('first_'))
-def set_first_coin(call):
+@bot.message_handler(commands=['trading'])
+def trade_on(message):
+    cid = message.chat.id
+    if cid in users:
+        users[cid]["trading"] = True
+        lang = users[cid]["lang"]
+        bot.send_message(cid, f"{strings[lang]['trade_group']}{strings[lang]['trading_on']}", parse_mode='Markdown')
+
+@bot.message_handler(commands=['stoptrading'])
+def trade_off(message):
+    cid = message.chat.id
+    if cid in users:
+        users[cid]["trading"] = False
+        lang = users[cid]["lang"]
+        bot.send_message(cid, f"{strings[lang]['trade_group']}{strings[lang]['trading_off']}", parse_mode='Markdown')
+
+@bot.message_handler(commands=['changecoin', 'multicoin'])
+def change_coin(message):
+    cid = message.chat.id
+    if cid in users:
+        lang = users[cid]["lang"]
+        prefix = "first_" if message.text == "/changecoin" else "add_"
+        kb = types.InlineKeyboardMarkup()
+        for c in COIN_LIST:
+            kb.add(types.InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"{prefix}{c}"))
+        bot.send_message(cid, f"{strings[lang]['coin_group']}{strings[lang]['select_coin']}", reply_markup=kb, parse_mode='Markdown')
+
+# --- CALLBACK ՄՇԱԿՈՒՄ ---
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_handler(call):
     cid = call.message.chat.id
-    coin = call.data.replace("first_", "")
-    users[cid]["coins"] = [coin]
+    if cid not in users: return
+    
     lang = users[cid]["lang"]
-    bot.send_message(cid, f"{strings[lang]['welcome']}{coin}{strings[lang]['help_hint']}", parse_mode='Markdown')
 
-# Անալիզի ֆունկցիա (Աշխատում է հետին պլանում)
+    if call.data in ['am', 'ru', 'en']:
+        users[cid]["lang"] = call.data
+        kb = types.InlineKeyboardMarkup()
+        for c in COIN_LIST:
+            kb.add(types.InlineKeyboardButton(c.replace("USDT", ""), callback_data=f"first_{c}"))
+        bot.edit_message_text(strings[call.data]["select_coin"], cid, call.message.message_id, reply_markup=kb)
+    
+    elif call.data.startswith('first_'):
+        coin = call.data.replace("first_", "")
+        users[cid]["coins"] = [coin]
+        bot.send_message(cid, f"{strings[lang]['welcome']}{coin}{strings[lang]['help_hint']}", parse_mode='Markdown')
+        
+    elif call.data.startswith('add_'):
+        coin = call.data.replace("add_", "")
+        if coin not in users[cid]["coins"]:
+            users[cid]["coins"].append(coin)
+        bot.send_message(cid, f"{strings[lang]['coin_group']}{strings[lang]['added_multi']}{coin}", parse_mode='Markdown')
+
+# --- ԱՆԱԼԻԶԻ ՖՈՒՆԿՑԻԱ ---
+
 def run_analysis():
     while True:
         try:
             now = time.time()
             for cid, ud in list(users.items()):
-                if ud["trading"] and ud.get("coins"):
+                if ud.get("trading") and ud.get("coins"):
                     for sym in ud["coins"]:
                         df = get_live_data(sym)
                         if df is not None and len(df) > 5:
@@ -131,12 +178,9 @@ def run_analysis():
                                 if last_triggered_zones.get(z_id + "_s") != True:
                                     bot.send_message(cid, f"⚠️ **Sell Signal**: {sym}\nPrice: {curr_p}$", parse_mode='Markdown')
                                     last_triggered_zones[z_id + "_s"] = True
-            time.sleep(15)
+            time.sleep(20)
         except Exception as e:
-            print(f"Analysis error: {e}")
             time.sleep(10)
 
 threading.Thread(target=run_analysis, daemon=True).start()
-
-print("Բոտը միացված է Render-ում...")
 bot.infinity_polling()
