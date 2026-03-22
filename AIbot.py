@@ -3,7 +3,7 @@ from telebot import types
 import google.generativeai as genai
 
 # Տվյալներ
-TOKEN = "8622979310:AAEk2OTftixTXxRg36-7Bu6c43Doroh2NgA"
+TOKEN = "8622979310:AAFBqIQCE9Yp4uy_aZ-yX1EceUBAejshbeA"
 genai.configure(api_key="AIzaSyB7tU2piqmRdwsGeqmbiiOfkvlN-JMfu4Q")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
